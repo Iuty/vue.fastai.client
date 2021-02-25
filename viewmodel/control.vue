@@ -12,7 +12,7 @@
                     <a >项目：</a>
                 </el-col>
                 <el-col :span="12" :offset="1" >
-                    <el-select :disabled="serverRun"
+                    <el-select :disabled="ctrlforbid"
                     v-model="selectedproject" @change="getProjectTags"
                     placeholder="请选择项目">
                         <el-option
@@ -24,7 +24,8 @@
                     </el-select>
                 </el-col>
                 <el-col :span="2" :offset="1">
-                    <el-button>+</el-button>
+                    <el-button :disabled="ctrlforbid"
+					icon="el-icon-plus"></el-button>
                 </el-col>
             </el-row>
             <el-row class="model-section">
@@ -34,7 +35,7 @@
                 <el-col :span="12" :offset="1">
                     <el-select v-model="selectedtag"
                     placeholder="请选择模型"
-                    :disabled="serverRun">
+                    :disabled="ctrlforbid">
                         <el-option
                               v-for="item in tags"
                               :key="item"
@@ -44,7 +45,8 @@
                     </el-select>
                 </el-col>
                 <el-col :span="2" :offset="1">
-                    <el-button>+</el-button>
+                    <el-button icon="el-icon-delete" :disabled="ctrlforbid"
+					@click.native="clearTag"></el-button>
                 </el-col>
             </el-row>
         </el-row>
@@ -56,7 +58,7 @@
             
             <el-col :span="6" :offset="16">
                 <el-button type="danger" v-if="serverRun" icon="el-icon-video-pause" @click.native="stop">停止</el-button>
-                <el-button type="primary" v-else icon="el-icon-video-play" @click.native="start">启动</el-button>
+                <el-button type="primary" v-else icon="el-icon-video-play" @click.native="start" :disabled="ctrlforbid">启动</el-button>
             </el-col>
         </el-row>
         <br>
@@ -67,26 +69,68 @@
         <el-row id="test-directory">
             <el-row>
                 <el-col :span="20" :offset="2">
-                    <el-input type="file" accept=".jpg" 
+                    <el-input type="text" accept=".bmp" 
+					placeholder="粘贴文件/文件夹路径"
                     v-model="filePath" @change="pathChange"
-                    :disabled="serverRun"></el-input>
+                    :disabled="ctrlforbid"></el-input>
                 </el-col>
                 
             </el-row>
             <el-row class="model-section">
                 <el-col :span="4" :offset="2">
                     <el-checkbox v-model="checked"
-                    :disabled="serverRun">目录测试</el-checkbox>
+                    :disabled=true>单个文件测试</el-checkbox>
                 </el-col>
                 <el-col :span="6" :offset="10">
                     <el-button type="success" icon="el-icon-money" @click="testDirectory"
-                    :disabled="serverRun">测试</el-button>
+                    :disabled="testforbid">测试</el-button>
                 </el-col>
             </el-row>
+			
         </el-row>
+		<br>
+		<br>
+		
+		
+		<el-divider content-position="left">同步模型：</el-divider>
+		<el-row id="update-model">
+		    
+		    <el-row class="model-section">
+		        
+		        <el-col :span="6" :offset="16">
+		            <el-button type="warning" icon="el-icon-document-copy" @click="updateModel"
+		            :disabled="ctrlforbid">同步</el-button>
+		        </el-col>
+		    </el-row>
+			
+		</el-row>
         <br>
         <br>
         <br>
+		<el-dialog
+		  title="测试结果"
+		  :visible.sync="resultVisible"
+		  width="50%"
+		  >
+			  <span class="details">统计：{{details}}</span>
+			  <br>
+			  <br>
+			  <br>
+			  <span>
+				  <el-col v-for="(d,i) in result">
+					<el-col :span="20" class="path">{{i}}:</el-col>
+					
+				  	<el-col :span="4" class="rst">{{d}}</el-col>			
+				  </el-col>
+			  
+			  </span>
+			  <br>
+			  <br>
+			  <br>
+		    <span>
+		      <el-button @click="resultVisible = false">取 消</el-button>
+		    </span>
+		</el-dialog>
     </div>
 </template>
 
@@ -98,11 +142,15 @@
             return {
                 serverRun:false,
                 filePath:"",
-                server:"http://192.168.0.245:7738/api/nn/fastcnn",
+                server:"http://127.0.0.1:7738/api/nn/fastcnn",
                 projects:[],
                 selectedproject:"",
                 tags:[],
-                selectedtag:""
+                selectedtag:"",
+				result:{},
+				details:"",
+				ctrling:false,
+				resultVisible:false,
             }
         },
         mounted:function(){
@@ -110,9 +158,12 @@
             this.getProjects();
         },
         computed:{
-            ctrenabled:function(){
-                return !this.serverRun;
-            } 
+            ctrlforbid:function(){
+                return this.serverRun | this.ctrling;
+            },
+			testforbid:function(){
+				return this.ctrlforbid | this.selectedtag == "";
+			}
         },
         methods:{
             getStatus:function(){
@@ -165,15 +216,46 @@
                 $.ajax(settings).done(function(response){
                     if(response.success){
                         _.tags = response.data;
-                        _.selectedtag = "";
+                        //_.selectedtag = "";
                     }
                 });
             },
+			clearTag:function(){
+				this.selectedtag = "";
+			},
             pathChange:function(path){
                 this.filePath = path
+				
+				
             },
             testDirectory:function(){
-                alert(this.filePath)
+                let _ = this;
+				_.ctrling = true;
+				let isfile = "False";
+				if (_.checked){
+					isfile = "True";
+				}
+                let settings =  {
+                  "url": "http://127.0.0.1:7738/api/nn/fastcnn",
+                  "method": "POST",
+                  "data": {
+                    "path": _.filePath,
+                    "cmd": "testPictures",
+                    "isfile": isfile,
+                    "projectname": _.selectedproject,
+                    "tag": _.selectedtag,
+                  }
+                };
+                $.ajax(settings).done(function(response){
+					_.ctrling = false
+					
+					if(response.success){
+						
+						_.result = response.data
+						_.details = JSON.stringify(response.details)
+						_.resultVisible = true
+					}
+                });
             },
             start:function(){
                 let _ = this;
@@ -183,12 +265,13 @@
                   "data": {
                     "cmd": "start",
                     "projectname": _.selectedproject,
-                    "tag":_.selectdtag
+                    "tag":_.selectedtag
                   }
                 };
                 $.ajax(settings).done(function(response){
                     if(response.success){
                         _.serverRun = response.status;
+						_.getProjectTags()
                     }
                 });
             },
@@ -214,6 +297,7 @@
 <style>
     #controlpanel{
         background-color: #eee;
+		
     }
     .label{
         padding-top: 8px;
@@ -223,5 +307,13 @@
     .model-section{
         padding-top: 6px;
     }
-    
+	.details{
+		color:seagreen;
+	}
+    .path{
+		color:darkblue;
+	}
+	.rst{
+		color:orange;
+	}
 </style>

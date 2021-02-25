@@ -2,10 +2,10 @@
   <div id="app">
     <el-row>
     <el-col :span="frameSpan">
-        <iframe id="frame" frameborder=0 src="http://www.baidu.com" :style="{width:frameWidth,height:frameHeight,marginWidth:frameWidth}"></iframe>
+        <iframe id="frame" frameborder=0 src="http://localhost:6006" :style="{width:frameWidth,height:frameHeight,marginWidth:frameWidth}"></iframe>
     </el-col>
     
-    <el-col :span="controlSpan">
+    <el-col :span="controlSpan" id="ai-control">
         <el-row>
             <el-col class="controlSwitch">
                 <el-switch
@@ -18,6 +18,9 @@
         <el-row>
         <controlpanel v-show="showControl"></controlpanel>
         </el-row>
+		<el-row>
+			<testresult :result="testreturn"></testresult>
+		</el-row>
     </el-col>
     </el-row>
   </div>
@@ -26,17 +29,19 @@
 <script>
 
 import controlpanel from "../viewmodel/control.vue"
+import testresult from"../viewmodel/testresult.vue"
 export default {
   name: 'app',
   components: {
-    controlpanel
+    controlpanel,
+	testresult
   },
   computed:{
       frameHeight:function(){
           return window.innerHeight+"px"
       },
       frameWidth:function(){
-          let w = window.innerWidth * 23/24
+          let w = window.innerWidth 
           if(this.showControl){
               w *= 0.8;
           }
@@ -45,14 +50,14 @@ export default {
       frameSpan:function(){
           let s = 23
           if(this.showControl){
-              s = 18
+              s = 20
           }
           return s
       },
       controlSpan:function(){
           let s = 1
           if(this.showControl){
-              s = 6
+              s = 4
           }
           return s
       }
@@ -75,7 +80,7 @@ export default {
   text-align: center;
   color: #2c3e50;
   height: 100%;
-  padding-top: 30px;
+  
 }
 #show{
     z-index:1;
@@ -83,6 +88,9 @@ export default {
 }
 .controlSwitch{
     text-align:end;
+}
+#ai-control{
+	padding-top: 70px;
 }
 body{
     height: 100%;
