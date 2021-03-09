@@ -2,21 +2,35 @@
   <div id="app">
     <el-row>
     <el-col :span="frameSpan">
-        <iframe id="frame" frameborder=0 src="http://localhost:6006" :style="{width:frameWidth,height:frameHeight,marginWidth:frameWidth}"></iframe>
-    </el-col>
+        
+		<img v-show="showImg" 
+		src="./assets/background.jpg" 
+		class="background"
+		:style="{width:frameWidth,height:frameHeight,marginWidth:frameWidth}"></img>
+        <iframe id="frame" frameborder=0 v-show="showBoard"
+        src="http://localhost:6006" 
+        :style="{width:frameWidth,height:frameHeight,marginWidth:frameWidth}"
+        ></iframe>
+	</el-col>
     
     <el-col :span="controlSpan" id="ai-control">
+		<el-row>
+			<el-col :span="6">
+				<img src="./assets/logo.png" style="{width: 80px;height: 80px;}"></img>
+			</el-col>
+		</el-row>
         <el-row>
             <el-col class="controlSwitch">
                 <el-switch
                   v-model="showControl"
+				  :width="50"
                   active-color="#13ce66"
                   inactive-color="#4949ff">
                 </el-switch>
             </el-col>
         </el-row>
         <el-row>
-        <controlpanel v-show="showControl"></controlpanel>
+        <controlpanel v-show="showControl" @showTensorboard="onShowTensorboard"></controlpanel>
         </el-row>
 		<el-row>
 			<testresult :result="testreturn"></testresult>
@@ -65,9 +79,16 @@ export default {
   data:function(){
       return {
           showControl:false,
-          
+          showImg:true,
+		  showBoard:false
           
       }
+  },
+  methods:{
+	  onShowTensorboard:function(bshow){
+		  this.showImg = !bshow;
+		  this.showBoard=bshow;
+	  }
   }
 }
 </script>
@@ -82,15 +103,19 @@ export default {
   height: 100%;
   
 }
+
 #show{
     z-index:1;
     
+}
+.background{
+	
 }
 .controlSwitch{
     text-align:end;
 }
 #ai-control{
-	padding-top: 70px;
+	padding-top: 10px;
 }
 body{
     height: 100%;
